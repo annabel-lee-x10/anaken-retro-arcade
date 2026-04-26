@@ -209,7 +209,7 @@ function ControllerBound({ active, onSelect }) {
         else if (dir === 'up') send('HARD');
       }}
       onA={() => active && send('ROTATE', { dir: 1 })}
-      onB={() => active && send('ROTATE', { dir: -1 })}
+      onB={() => active && send('HARD')}
       onX={() => active && send('ROTATE', { dir: 1 })}
       onY={() => active && send('HOLD')}
       onSelect={onSelect}
