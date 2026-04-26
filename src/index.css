@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@import "./skins/skins.css";
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg, #000);
+  color: var(--fg, #fff);
+  font-family: var(--font-body, system-ui, sans-serif);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+* { box-sizing: border-box; }
+
+button { font-family: inherit; }

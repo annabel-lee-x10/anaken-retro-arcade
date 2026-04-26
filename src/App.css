@@ -1,0 +1,611 @@
+/* =========================================================================
+   ARCADE LAYOUT — mobile-first, scales gracefully to desktop.
+   The whole UI is the controller. Screen lives in the top half.
+   ========================================================================= */
+
+.device-shell {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg-grad, #000);
+  color: var(--fg);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.device-frame {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--controller-bg);
+  border: var(--controller-border);
+  box-shadow: var(--controller-shadow);
+  padding: 12px 14px 18px;
+  gap: 10px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+@media (min-width: 768px) {
+  .device-shell {
+    padding: 24px;
+  }
+  .device-frame {
+    max-width: 520px;
+    height: min(100dvh - 48px, 980px);
+    border-radius: 28px;
+  }
+}
+
+/* ------ TOP BAR ------ */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  min-height: 36px;
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--title-color);
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-shadow: var(--title-shadow);
+}
+
+.title-glyph { font-size: 12px; opacity: 0.7; }
+
+.topbar-controls { display: flex; align-items: center; gap: 8px; }
+
+.skin-switcher {
+  display: flex;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.skin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.skin-btn.active { background: var(--accent); color: #000; }
+[data-skin='neon'] .skin-btn.active { box-shadow: 0 0 12px var(--accent); }
+
+.skin-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.skin-dot-neon { background: linear-gradient(135deg, #00ff88, #00d4ff); }
+.skin-dot-snes { background: linear-gradient(135deg, #c8c8d0, #4a0e8f); }
+.skin-dot-quiet { background: linear-gradient(135deg, #1c1c1e, #E8520A); }
+
+.skin-label { font-weight: 700; }
+
+.mute-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: var(--sysbtn-border);
+  background: var(--sysbtn-bg);
+  color: var(--sysbtn-fg);
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+/* ------ SCREEN ------ */
+.screen-bezel {
+  position: relative;
+  background: var(--bezel);
+  border: var(--bezel-border);
+  border-radius: 14px;
+  padding: 8px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-inner {
+  position: relative;
+  flex: 1;
+  background: var(--screen-bg);
+  border-radius: 6px;
+  box-shadow: var(--screen-shadow);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.screen-glare {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ------ CONTROLLER PANEL ------ */
+.controller-panel {
+  position: relative;
+  padding: 8px 4px 0;
+  min-height: 200px;
+}
+
+@media (min-width: 768px) {
+  .controller-panel { min-height: 240px; }
+}
+
+.controller-decor {
+  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.controller-strip {
+  height: 2px;
+  width: 80px;
+  background: var(--accent);
+  opacity: 0.5;
+  border-radius: 2px;
+}
+[data-skin='neon'] .controller-strip { box-shadow: 0 0 8px var(--accent); }
+
+.controller-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "dpad face"
+    "sys  sys";
+  gap: 14px;
+  align-items: center;
+  justify-items: center;
+}
+
+.zone-dpad { grid-area: dpad; }
+.zone-face { grid-area: face; }
+.zone-sys { grid-area: sys; width: 100%; }
+
+/* ------ D-PAD ------ */
+.dpad {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+
+@media (max-width: 360px) { .dpad { width: 116px; height: 116px; } }
+
+.dpad-arm {
+  position: relative;
+  background: var(--dpad-bg);
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--dpad-shadow);
+  transition: filter 0.08s, transform 0.05s;
+}
+
+.dpad-arm:active { filter: brightness(1.5); transform: scale(0.98); }
+[data-skin='neon'] .dpad-arm:active {
+  background: var(--dpad-active);
+  box-shadow: var(--dpad-active-glow), inset 0 0 12px #00000088;
+}
+
+.dpad-up    { grid-column: 2; grid-row: 1; border-radius: 8px 8px 2px 2px; }
+.dpad-down  { grid-column: 2; grid-row: 3; border-radius: 2px 2px 8px 8px; }
+.dpad-left  { grid-column: 1; grid-row: 2; border-radius: 8px 2px 2px 8px; }
+.dpad-right { grid-column: 3; grid-row: 2; border-radius: 2px 8px 8px 2px; }
+
+.dpad-arm::after {
+  content: '';
+  position: absolute;
+  inset: 30%;
+  background: var(--accent);
+  opacity: 0.35;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.dpad-down::after { transform: rotate(180deg); }
+.dpad-left::after { transform: rotate(-90deg); }
+.dpad-right::after { transform: rotate(90deg); }
+
+.dpad-hub {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%; height: 100%;
+  background: var(--dpad-bg);
+  border-radius: 4px;
+  box-shadow: var(--dpad-shadow);
+  position: relative;
+}
+
+.dpad-hub::after {
+  content: '';
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.25;
+}
+
+/* ------ FACE BUTTONS ------ */
+.face-cluster { position: relative; width: 132px; height: 132px; }
+@media (max-width: 360px) { .face-cluster { width: 116px; height: 116px; } }
+
+.face-pos { position: absolute; width: 44px; height: 44px; }
+@media (max-width: 360px) { .face-pos { width: 40px; height: 40px; } }
+
+.face-pos-x { top: 0; left: 50%; transform: translateX(-50%); }
+.face-pos-y { left: 0; top: 50%; transform: translateY(-50%); }
+.face-pos-a { right: 0; top: 50%; transform: translateY(-50%); }
+.face-pos-b { bottom: 0; left: 50%; transform: translateX(-50%); }
+
+.face-btn {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #00000088;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: var(--face-shadow);
+  transition: filter 0.08s, transform 0.05s;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.face-btn::before {
+  content: '';
+  position: absolute;
+  top: 6%;
+  left: 12%;
+  right: 12%;
+  height: 28%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45), transparent);
+  pointer-events: none;
+}
+
+.face-btn.pressed,
+.face-btn:active {
+  transform: translateY(1px) scale(0.96);
+  filter: brightness(0.9);
+}
+
+.face-a { background: var(--face-A); box-shadow: var(--face-shadow), var(--face-A-glow); }
+.face-b { background: var(--face-B); box-shadow: var(--face-shadow), var(--face-B-glow); }
+.face-x { background: var(--face-X); box-shadow: var(--face-shadow), var(--face-X-glow); }
+.face-y { background: var(--face-Y); box-shadow: var(--face-shadow), var(--face-Y-glow); }
+
+.face-letter { position: relative; z-index: 1; }
+
+[data-skin='neon'] .face-btn { color: #000; text-shadow: 0 0 4px currentColor; }
+[data-skin='snes'] .face-btn { color: #fff; text-shadow: 0 1px 1px #00000099; }
+[data-skin='quiet'] .face-btn { color: #00000099; }
+
+/* ------ SYSTEM BUTTONS ------ */
+.sys-cluster { display: flex; justify-content: center; gap: 14px; margin-top: 6px; }
+
+.sys-btn {
+  background: var(--sysbtn-bg);
+  color: var(--sysbtn-fg);
+  border: var(--sysbtn-border);
+  border-radius: 14px;
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.4);
+  transition: transform 0.05s, filter 0.08s;
+}
+
+.sys-btn.pressed,
+.sys-btn:active {
+  transform: translateY(1px);
+  filter: brightness(0.85);
+}
+
+/* ------ TETRIS SCREEN INTERIOR ------ */
+.tetris-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 6px;
+  font-family: var(--font-hud);
+  color: var(--fg);
+  z-index: 1;
+}
+
+.tetris-hud-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hud-block {
+  text-align: center;
+  padding: 4px 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+[data-skin='neon'] .hud-block { border-color: rgba(0, 255, 136, 0.25); }
+
+.hud-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+  font-family: var(--font-display);
+}
+
+.hud-value {
+  font-size: 16px;
+  font-family: var(--font-hud);
+  color: var(--accent);
+  text-shadow: var(--hud-glow);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.tetris-playfield-wrap {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(36px, 0.5fr) auto minmax(36px, 0.5fr);
+  gap: 6px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.tetris-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.hud-mini {
+  font-family: var(--font-display);
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+}
+
+.tetris-board {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(20, 1fr);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  aspect-ratio: 10 / 20;
+  height: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+[data-skin='neon'] .tetris-board {
+  border-color: rgba(0, 255, 136, 0.3);
+  box-shadow: inset 0 0 24px rgba(0, 255, 136, 0.1);
+}
+
+[data-skin='snes'] .tetris-board {
+  border: 1px solid #4a3e6c;
+  background: #0a0508;
+}
+
+.cell { position: relative; background: transparent; }
+
+.cell.filled {
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.4),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+[data-skin='neon'] .cell.filled {
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.45),
+    0 0 6px var(--cell-color);
+}
+
+.cell.ghost {
+  background: transparent;
+  border: 1px dashed var(--cell-color);
+  opacity: 0.45;
+}
+
+.piece-mini {
+  display: grid;
+  grid-template-columns: repeat(var(--mini-cols, 4), 1fr);
+  grid-template-rows: repeat(var(--mini-rows, 4), 1fr);
+  width: 100%;
+  max-width: 38px;
+  aspect-ratio: var(--mini-cols, 4) / var(--mini-rows, 4);
+  gap: 1px;
+}
+
+.piece-mini.empty {
+  width: 100%;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.piece-mini.dim { opacity: 0.35; filter: grayscale(0.5); }
+
+.mini-cell { background: transparent; }
+
+.mini-cell.on {
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+[data-skin='neon'] .mini-cell.on {
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.4), 0 0 4px currentColor;
+}
+
+/* ------ OVERLAYS ------ */
+.tetris-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(2px);
+  font-family: var(--font-display);
+  z-index: 5;
+  gap: 12px;
+  padding: 16px;
+}
+
+.tetris-overlay-title {
+  font-size: 22px;
+  color: var(--accent);
+  text-shadow: var(--hud-glow);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.tetris-overlay-sub {
+  font-family: var(--font-hud);
+  font-size: 14px;
+  color: var(--fg);
+  letter-spacing: 0.06em;
+}
+
+.tetris-overlay-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+.tetris-overlay-actions button {
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #000;
+  border: 0;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+[data-skin='neon'] .tetris-overlay-actions button { box-shadow: 0 0 12px var(--accent); }
+
+/* ------ MODE SELECT ------ */
+.mode-select {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  gap: 10px;
+  z-index: 1;
+  font-family: var(--font-body);
+  color: var(--fg);
+}
+
+.mode-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow: var(--hud-glow);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mode-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--accent);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.12s, transform 0.08s;
+  color: var(--fg);
+}
+
+[data-skin='neon'] .mode-item {
+  background: rgba(0, 255, 136, 0.04);
+  border-color: rgba(0, 255, 136, 0.18);
+  border-left-color: var(--accent);
+}
+
+.mode-item:hover { background: rgba(255, 255, 255, 0.08); }
+.mode-item:active { transform: scale(0.985); }
+
+.mode-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.mode-desc {
+  font-size: 13px;
+  font-family: var(--font-hud);
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+}
+
+[data-skin='snes'] .mode-desc { font-size: 12px; }
+
+.mode-hint {
+  text-align: center;
+  font-size: 10px;
+  font-family: var(--font-hud);
+  color: var(--fg-dim);
+  letter-spacing: 0.05em;
+}
+
+[data-skin='snes'] .hud-value,
+[data-skin='snes'] .tetris-overlay-sub { letter-spacing: 0.04em; }

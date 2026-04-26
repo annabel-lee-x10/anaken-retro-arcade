@@ -1,0 +1,232 @@
+/* =========================================================================
+   SKINS — three distinct controller aesthetics, switchable at runtime.
+   The data-skin attribute on <body> selects which set of variables is active.
+   Fonts are loaded via <link> tags in index.html.
+   ========================================================================= */
+
+/* ---- 1. NEON ARCADE — phosphor-glow CRT cabinet ---------------------- */
+[data-skin='neon'] {
+  --bg: #050708;
+  --bg-grad: radial-gradient(ellipse at 50% 0%, #0c1a1a 0%, #050708 70%);
+  --controller-bg: linear-gradient(180deg, #0a0d10 0%, #05080a 100%);
+  --controller-border: 1px solid #00ff8855;
+  --controller-shadow:
+    inset 0 1px 0 #00ff8830,
+    inset 0 -2px 8px #00000088,
+    0 30px 60px -20px #00ffaa22;
+
+  --bezel: linear-gradient(180deg, #1a1f25 0%, #0a0d10 100%);
+  --bezel-border: 2px solid #00ff8888;
+  --screen-bg: #000000;
+  --screen-shadow:
+    inset 0 0 40px #00000099,
+    inset 0 0 80px #00ff8810;
+
+  --fg: #b6ffd1;
+  --fg-dim: #4dffaa66;
+  --accent: #00ff88;
+  --accent-2: #00e0ff;
+  --accent-3: #ff00aa;
+  --hud-glow: 0 0 8px #00ff88, 0 0 16px #00ff8866;
+
+  --dpad-bg: linear-gradient(180deg, #1a1f25 0%, #0a0d10 100%);
+  --dpad-shadow: inset 0 -2px 4px #00000088, 0 0 0 1px #00ff8855, 0 0 16px #00ff8822;
+  --dpad-active: #00ff88;
+  --dpad-active-glow: 0 0 18px #00ff88aa;
+
+  --face-shadow: inset 0 -3px 6px #00000099, 0 4px 12px #00000088;
+  --face-A: #ff2d6e;
+  --face-A-glow: 0 0 18px #ff2d6e;
+  --face-B: #ffe800;
+  --face-B-glow: 0 0 18px #ffe800;
+  --face-X: #00d4ff;
+  --face-X-glow: 0 0 18px #00d4ff;
+  --face-Y: #00ff88;
+  --face-Y-glow: 0 0 18px #00ff88;
+
+  --sysbtn-bg: #0a0d10;
+  --sysbtn-fg: #00ff88;
+  --sysbtn-border: 1px solid #00ff8855;
+
+  --font-display: 'Press Start 2P', monospace;
+  --font-body: 'VT323', monospace;
+  --font-mono: 'VT323', monospace;
+  --font-hud: 'VT323', monospace;
+
+  --scanline-opacity: 0.18;
+  --scanline-color: #00ff88;
+  --crt-flicker: 1;
+  --grain-opacity: 0;
+
+  --title: 'A N A K E N O S';
+  --title-color: #00ff88;
+  --title-shadow: 0 0 12px #00ff88, 0 0 24px #00ff8888;
+}
+
+/* ---- 2. SNES CLASSIC — clean light-grey console -------------------- */
+[data-skin='snes'] {
+  --bg: #c8c8d0;
+  --bg-grad: linear-gradient(180deg, #d5d5dc 0%, #b8b8c2 100%);
+  --controller-bg: linear-gradient(180deg, #cfcfd4 0%, #b6b6bd 100%);
+  --controller-border: 1px solid #888894;
+  --controller-shadow:
+    inset 0 2px 0 #ffffff66,
+    inset 0 -3px 6px #00000033,
+    0 24px 48px -16px #0000004a;
+
+  --bezel: linear-gradient(180deg, #2a2438 0%, #1a1428 100%);
+  --bezel-border: 4px solid #4a3e6c;
+  --screen-bg: #1c1818;
+  --screen-shadow:
+    inset 0 0 16px #00000088,
+    inset 0 2px 4px #4a3e6c44;
+
+  --fg: #f5f5fa;
+  --fg-dim: #a8a8b8;
+  --accent: #4a0e8f;
+  --accent-2: #8e4ec6;
+  --accent-3: #ff6a00;
+  --hud-glow: none;
+
+  --dpad-bg: linear-gradient(180deg, #2a2632 0%, #181420 100%);
+  --dpad-shadow: inset 0 -2px 3px #00000099, 0 1px 2px #ffffff44;
+  --dpad-active: #6a3aaa;
+  --dpad-active-glow: none;
+
+  --face-shadow: inset 0 -3px 4px #00000044, 0 2px 4px #00000033;
+  --face-A: #d62828;
+  --face-A-glow: none;
+  --face-B: #f4d03f;
+  --face-B-glow: none;
+  --face-X: #2e86de;
+  --face-X-glow: none;
+  --face-Y: #2dab66;
+  --face-Y-glow: none;
+
+  --sysbtn-bg: #44384c;
+  --sysbtn-fg: #d8d4dc;
+  --sysbtn-border: 1px solid #2a2032;
+
+  --font-display: 'Bungee', sans-serif;
+  --font-body: 'Space Mono', monospace;
+  --font-mono: 'Space Mono', monospace;
+  --font-hud: 'Press Start 2P', monospace;
+
+  --scanline-opacity: 0;
+  --scanline-color: transparent;
+  --crt-flicker: 0;
+  --grain-opacity: 0;
+
+  --title: 'AnakenOS';
+  --title-color: #4a0e8f;
+  --title-shadow: 1px 1px 0 #ffffff88;
+}
+
+/* ---- 3. QUIETBUILD — industrial dark slate w/ orange accent --------- */
+[data-skin='quiet'] {
+  --bg: #0e0f12;
+  --bg-grad: linear-gradient(180deg, #1c1c1e 0%, #0a0b0d 100%);
+  --controller-bg: linear-gradient(180deg, #1f2024 0%, #131418 100%);
+  --controller-border: 1px solid #2a2c30;
+  --controller-shadow:
+    inset 0 1px 0 #ffffff14,
+    inset 0 -2px 4px #00000088,
+    0 24px 48px -16px #00000099;
+
+  --bezel: linear-gradient(180deg, #0f1014 0%, #050608 100%);
+  --bezel-border: 1px solid #E8520A33;
+  --screen-bg: #050608;
+  --screen-shadow:
+    inset 0 0 24px #00000099,
+    inset 0 0 48px #E8520A0a;
+
+  --fg: #e8e6e3;
+  --fg-dim: #6e6c68;
+  --accent: #E8520A;
+  --accent-2: #4A6FA5;
+  --accent-3: #f0c674;
+  --hud-glow: none;
+
+  --dpad-bg: linear-gradient(180deg, #25262a 0%, #15161a 100%);
+  --dpad-shadow:
+    inset 0 -2px 4px #00000099,
+    inset 0 1px 0 #ffffff10,
+    0 0 0 1px #2a2c30;
+  --dpad-active: #E8520A;
+  --dpad-active-glow: none;
+
+  --face-shadow:
+    inset 0 -3px 4px #00000088,
+    inset 0 1px 0 #ffffff20,
+    0 2px 6px #00000066;
+  --face-A: #E8520A;
+  --face-A-glow: none;
+  --face-B: #f0c674;
+  --face-B-glow: none;
+  --face-X: #4A6FA5;
+  --face-X-glow: none;
+  --face-Y: #6b8e23;
+  --face-Y-glow: none;
+
+  --sysbtn-bg: #1a1b1f;
+  --sysbtn-fg: #E8520A;
+  --sysbtn-border: 1px solid #2a2c30;
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Space Mono', monospace;
+  --font-mono: 'Space Mono', monospace;
+  --font-hud: 'Space Mono', monospace;
+
+  --scanline-opacity: 0;
+  --scanline-color: transparent;
+  --crt-flicker: 0;
+  --grain-opacity: 0.06;
+
+  --title: 'ANAKENOS';
+  --title-color: #E8520A;
+  --title-shadow: none;
+}
+
+/* ---- shared ---- */
+.skin-bg {
+  background: var(--bg-grad);
+}
+
+.skin-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity, 0);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+  mix-blend-mode: overlay;
+  z-index: 100;
+}
+
+.skin-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--scanline-opacity, 0);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--scanline-color, transparent) 0px,
+    var(--scanline-color, transparent) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: screen;
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.96; }
+}
+
+.skin-flicker {
+  animation: crt-flicker 0.18s steps(2) infinite;
+  animation-play-state: paused;
+}
+[data-skin='neon'] .skin-flicker {
+  animation-play-state: running;
+}
