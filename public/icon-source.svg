@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1f25"/>
+      <stop offset="100%" stop-color="#0a0d10"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="512" height="512" fill="#050708"/>
+  <g transform="translate(10 10)">
+    <rect x="12" y="12" width="468" height="468"
+      rx="89" ry="89"
+      fill="url(#bodyGrad)"
+      stroke="#00ff88" stroke-width="12"
+      filter="url(#glow)"/>
+    <g fill="#00ff88" filter="url(#glow)">
+      <rect x="115.62" y="162.36" width="83.64" height="216.48" rx="12.546"/>
+      <rect x="49.2" y="228.78000000000003" width="216.48" height="83.64" rx="12.546"/>
+    </g>
+    <g filter="url(#glow)">
+      <circle cx="344.4" cy="206.64000000000001" r="34.440000000000005" fill="#ffe800"/>
+      <circle cx="408.35999999999996" cy="270.6" r="34.440000000000005" fill="#ff2d6e"/>
+      <circle cx="344.4" cy="334.56" r="34.440000000000005" fill="#00ff88"/>
+      <circle cx="280.44" cy="270.6" r="34.440000000000005" fill="#00d4ff"/>
+    </g>
+  </g>
+</svg>
