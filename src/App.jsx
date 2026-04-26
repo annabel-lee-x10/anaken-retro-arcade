@@ -7,8 +7,10 @@ import { GamePicker } from './components/GamePicker.jsx';
 import { PauseMenu } from './components/PauseMenu.jsx';
 import { TetrisScreen, useTetris } from './games/tetris/TetrisGame.jsx';
 import { SnakeScreen, useSnake } from './games/snake/SnakeGame.jsx';
+import { InvadersScreen, useInvaders } from './games/invaders/InvadersGame.jsx';
 import { tetrisAudio } from './games/tetris/audio.js';
 import { snakeAudio } from './games/snake/audio.js';
+import { invadersAudio } from './games/invaders/audio.js';
 import { GAMES, shouldShowPicker, getDefaultGame, getGameById } from './games/registry.js';
 import './App.css';
 
@@ -34,6 +36,7 @@ export default function App() {
   useEffect(() => {
     tetrisAudio.setMuted(muted);
     snakeAudio.setMuted(muted);
+    invadersAudio.setMuted(muted);
     localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
   }, [muted]);
 
@@ -44,6 +47,8 @@ export default function App() {
     tetrisAudio.resume();
     snakeAudio.init();
     snakeAudio.resume();
+    invadersAudio.init();
+    invadersAudio.resume();
   }, []);
 
   const goToPickerOrModeSelect = useCallback(() => {
@@ -100,6 +105,21 @@ export default function App() {
           {screen === 'playing' && gameId === 'snake' && mode && (
             <SnakeGameMount
               key={`snake-${mode}`}
+              mode={mode}
+              menuOpen={menuOpen}
+              muted={muted}
+              hasPicker={shouldShowPicker(GAMES)}
+              onOpenMenu={() => setMenuOpen(true)}
+              onCloseMenu={() => setMenuOpen(false)}
+              onChangeMode={() => { setScreen('mode-select'); setMode(null); setMenuOpen(false); }}
+              onQuit={goToPickerOrModeSelect}
+              onToggleMute={() => setMuted((m) => !m)}
+              onGameOverMenu={() => { setScreen('mode-select'); setMode(null); }}
+            />
+          )}
+          {screen === 'playing' && gameId === 'invaders' && mode && (
+            <InvadersGameMount
+              key={`invaders-${mode}`}
               mode={mode}
               menuOpen={menuOpen}
               muted={muted}
@@ -299,6 +319,94 @@ function SnakeGameMount({
   );
 }
 
+// ----- Invaders game mount -------------------------------------------------
+
+function InvadersGameMount({
+  mode, menuOpen, muted, hasPicker,
+  onOpenMenu, onCloseMenu, onChangeMode, onQuit, onToggleMute, onGameOverMenu,
+}) {
+  const { state, dispatch } = useInvaders(mode);
+  useEffect(() => {
+    window.__arcadeDispatch = dispatch;
+    window.__arcadeState = state;
+    return () => {
+      if (window.__arcadeDispatch === dispatch) window.__arcadeDispatch = null;
+    };
+  });
+
+  const pausedByMenuRef = useRef(false);
+  useEffect(() => {
+    if (menuOpen) {
+      if (state.status === 'playing') {
+        pausedByMenuRef.current = true;
+        dispatch({ type: 'PAUSE' });
+      }
+    } else if (pausedByMenuRef.current) {
+      pausedByMenuRef.current = false;
+      if (state.status === 'paused') dispatch({ type: 'PAUSE' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (menuOpen) onCloseMenu();
+        else onOpenMenu();
+        return;
+      }
+      if (menuOpen) return;
+      const map = {
+        ArrowLeft:  () => dispatch({ type: 'MOVE', dx: -1 }),
+        ArrowRight: () => dispatch({ type: 'MOVE', dx: 1 }),
+        ' ':        () => dispatch({ type: 'SHOOT' }),
+        z:          () => dispatch({ type: 'SHOOT' }),
+        Z:          () => dispatch({ type: 'SHOOT' }),
+        x:          () => dispatch({ type: 'SHOOT' }),
+        X:          () => dispatch({ type: 'SHOOT' }),
+        Enter:      () => {
+          if (state.status === 'over') dispatch({ type: 'RESET' });
+          else dispatch({ type: 'PAUSE' });
+        },
+        p: () => dispatch({ type: 'PAUSE' }),
+        P: () => dispatch({ type: 'PAUSE' }),
+      };
+      const fn = map[e.key];
+      if (fn) {
+        e.preventDefault();
+        fn();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [dispatch, menuOpen, state.status, onOpenMenu, onCloseMenu]);
+
+  return (
+    <>
+      <InvadersScreen
+        state={state}
+        onAction={(a) => {
+          if (a === 'reset') dispatch({ type: 'RESET' });
+          if (a === 'menu') onGameOverMenu();
+        }}
+      />
+      {menuOpen && (
+        <PauseMenu
+          muted={muted}
+          hasPicker={hasPicker}
+          onResume={onCloseMenu}
+          onRestart={() => { dispatch({ type: 'RESET' }); onCloseMenu(); }}
+          onChangeMode={onChangeMode}
+          onQuit={onQuit}
+          onToggleMute={onToggleMute}
+          onClose={onCloseMenu}
+        />
+      )}
+    </>
+  );
+}
+
 // ----- Controller binding --------------------------------------------------
 
 function ControllerBound({ active, gameId, onSelect }) {
@@ -309,6 +417,7 @@ function ControllerBound({ active, gameId, onSelect }) {
   };
 
   const isSnake = gameId === 'snake';
+  const isInvaders = gameId === 'invaders';
 
   return (
     <Controller
@@ -316,6 +425,9 @@ function ControllerBound({ active, gameId, onSelect }) {
         if (!active) return;
         if (isSnake) {
           send('DIR', { dir });
+        } else if (isInvaders) {
+          if (dir === 'left') send('MOVE', { dx: -1 });
+          else if (dir === 'right') send('MOVE', { dx: 1 });
         } else {
           if (dir === 'left') send('MOVE', { dx: -1 });
           else if (dir === 'right') send('MOVE', { dx: 1 });
@@ -326,9 +438,12 @@ function ControllerBound({ active, gameId, onSelect }) {
       onA={() => {
         if (!active) return;
         if (isSnake) {
-          // A also acts as "play again" on game-over; on a live game it's a no-op.
           const s = window.__arcadeState;
           if (s?.status === 'over') send('RESET');
+        } else if (isInvaders) {
+          const s = window.__arcadeState;
+          if (s?.status === 'over') send('RESET');
+          else send('SHOOT');
         } else {
           send('ROTATE', { dir: 1 });
         }
@@ -338,17 +453,21 @@ function ControllerBound({ active, gameId, onSelect }) {
         if (isSnake) {
           const s = window.__arcadeState;
           if (s?.status === 'over') send('RESET');
+        } else if (isInvaders) {
+          const s = window.__arcadeState;
+          if (s?.status === 'over') send('RESET');
+          else send('SHOOT');
         } else {
           send('HARD');
         }
       }}
       onX={() => {
         if (!active) return;
-        if (!isSnake) send('ROTATE', { dir: 1 });
+        if (!isSnake && !isInvaders) send('ROTATE', { dir: 1 });
       }}
       onY={() => {
         if (!active) return;
-        if (!isSnake) send('HOLD');
+        if (!isSnake && !isInvaders) send('HOLD');
       }}
       onSelect={onSelect}
       onStart={() => active && send('PAUSE')}
