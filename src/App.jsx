@@ -8,9 +8,12 @@ import { PauseMenu } from './components/PauseMenu.jsx';
 import { TetrisScreen, useTetris } from './games/tetris/TetrisGame.jsx';
 import { SnakeScreen, useSnake } from './games/snake/SnakeGame.jsx';
 import { InvadersScreen, useInvaders } from './games/invaders/InvadersGame.jsx';
+import { PinballScreen } from './games/pinball/PinballGame.jsx';
+import { usePinball } from './games/pinball/usePinball.js';
 import { tetrisAudio } from './games/tetris/audio.js';
 import { snakeAudio } from './games/snake/audio.js';
 import { invadersAudio } from './games/invaders/audio.js';
+import { pinballAudio } from './games/pinball/audio.js';
 import { GAMES, shouldShowPicker, getDefaultGame, getGameById } from './games/registry.js';
 import './App.css';
 
@@ -37,6 +40,7 @@ export default function App() {
     tetrisAudio.setMuted(muted);
     snakeAudio.setMuted(muted);
     invadersAudio.setMuted(muted);
+    pinballAudio.setMuted(muted);
     localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
   }, [muted]);
 
@@ -49,6 +53,8 @@ export default function App() {
     snakeAudio.resume();
     invadersAudio.init();
     invadersAudio.resume();
+    pinballAudio.init();
+    pinballAudio.resume();
   }, []);
 
   const goToPickerOrModeSelect = useCallback(() => {
@@ -120,6 +126,21 @@ export default function App() {
           {screen === 'playing' && gameId === 'invaders' && mode && (
             <InvadersGameMount
               key={`invaders-${mode}`}
+              mode={mode}
+              menuOpen={menuOpen}
+              muted={muted}
+              hasPicker={shouldShowPicker(GAMES)}
+              onOpenMenu={() => setMenuOpen(true)}
+              onCloseMenu={() => setMenuOpen(false)}
+              onChangeMode={() => { setScreen('mode-select'); setMode(null); setMenuOpen(false); }}
+              onQuit={goToPickerOrModeSelect}
+              onToggleMute={() => setMuted((m) => !m)}
+              onGameOverMenu={() => { setScreen('mode-select'); setMode(null); }}
+            />
+          )}
+          {screen === 'playing' && gameId === 'pinball' && mode && (
+            <PinballGameMount
+              key={`pinball-${mode}`}
               mode={mode}
               menuOpen={menuOpen}
               muted={muted}
@@ -407,6 +428,121 @@ function InvadersGameMount({
   );
 }
 
+// ----- Pinball game mount --------------------------------------------------
+
+function PinballGameMount({
+  mode, menuOpen, muted, hasPicker,
+  onOpenMenu, onCloseMenu, onChangeMode, onQuit, onToggleMute, onGameOverMenu,
+}) {
+  const hookResult = usePinball(mode);
+  const { state, dispatch, plungerHeldRef, highScore } = hookResult;
+  useEffect(() => {
+    window.__arcadeDispatch = dispatch;
+    window.__arcadeState = state;
+    window.__arcadeHookResult = hookResult;
+    return () => {
+      if (window.__arcadeDispatch === dispatch) {
+        window.__arcadeDispatch = null;
+        window.__arcadeHookResult = null;
+      }
+    };
+  });
+
+  const pausedByMenuRef = useRef(false);
+  useEffect(() => {
+    if (menuOpen) {
+      if (state.status === 'playing') {
+        pausedByMenuRef.current = true;
+        dispatch({ type: 'PAUSE' });
+      }
+    } else if (pausedByMenuRef.current) {
+      pausedByMenuRef.current = false;
+      if (state.status === 'paused') dispatch({ type: 'PAUSE' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (menuOpen) onCloseMenu();
+        else onOpenMenu();
+        return;
+      }
+      if (menuOpen) return;
+      if (e.repeat) return;
+      const map = {
+        z: () => dispatch({ type: 'FLIPPER', side: 'left', up: true }),
+        Z: () => dispatch({ type: 'FLIPPER', side: 'left', up: true }),
+        '/': () => dispatch({ type: 'FLIPPER', side: 'right', up: true }),
+        '?': () => dispatch({ type: 'FLIPPER', side: 'right', up: true }),
+        ' ': () => { plungerHeldRef.current = true; },
+        ArrowDown: () => { plungerHeldRef.current = true; },
+        Enter: () => dispatch({ type: 'PAUSE' }),
+        p: () => dispatch({ type: 'PAUSE' }),
+        P: () => dispatch({ type: 'PAUSE' }),
+      };
+      const fn = map[e.key];
+      if (fn) { e.preventDefault(); fn(); }
+    };
+    const onUp = (e) => {
+      if (menuOpen) return;
+      const map = {
+        z: () => dispatch({ type: 'FLIPPER', side: 'left', up: false }),
+        Z: () => dispatch({ type: 'FLIPPER', side: 'left', up: false }),
+        '/': () => dispatch({ type: 'FLIPPER', side: 'right', up: false }),
+        '?': () => dispatch({ type: 'FLIPPER', side: 'right', up: false }),
+        ' ': () => {
+          if (plungerHeldRef.current) {
+            plungerHeldRef.current = false;
+            dispatch({ type: 'PLUNGER_RELEASE' });
+          }
+        },
+        ArrowDown: () => {
+          if (plungerHeldRef.current) {
+            plungerHeldRef.current = false;
+            dispatch({ type: 'PLUNGER_RELEASE' });
+          }
+        },
+      };
+      const fn = map[e.key];
+      if (fn) { e.preventDefault(); fn(); }
+    };
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+    };
+  }, [dispatch, plungerHeldRef, menuOpen, onOpenMenu, onCloseMenu]);
+
+  return (
+    <>
+      <PinballScreen
+        state={state}
+        highScore={highScore}
+        onAction={(a) => {
+          if (a === 'reset') dispatch({ type: 'RESET' });
+          if (a === 'menu') onGameOverMenu();
+        }}
+      />
+      {menuOpen && (
+        <PauseMenu
+          muted={muted}
+          hasPicker={hasPicker}
+          onResume={onCloseMenu}
+          onRestart={() => { dispatch({ type: 'RESET' }); onCloseMenu(); }}
+          onChangeMode={onChangeMode}
+          onQuit={onQuit}
+          onToggleMute={onToggleMute}
+          onClose={onCloseMenu}
+        />
+      )}
+    </>
+  );
+}
+
 // ----- Controller binding --------------------------------------------------
 
 function ControllerBound({ active, gameId, onSelect }) {
@@ -415,14 +551,20 @@ function ControllerBound({ active, gameId, onSelect }) {
     if (!d) return;
     d({ type, ...payload });
   };
+  const setPlungerHeld = (v) => {
+    const hr = window.__arcadeHookResult;
+    if (hr?.plungerHeldRef) hr.plungerHeldRef.current = v;
+  };
 
   const isSnake = gameId === 'snake';
   const isInvaders = gameId === 'invaders';
+  const isPinball = gameId === 'pinball';
 
   return (
     <Controller
       onDir={(dir) => {
         if (!active) return;
+        if (isPinball) return;     // d-pad reserved for future tilt nudge
         if (isSnake) {
           send('DIR', { dir });
         } else if (isInvaders) {
@@ -437,6 +579,7 @@ function ControllerBound({ active, gameId, onSelect }) {
       }}
       onA={() => {
         if (!active) return;
+        if (isPinball) return;     // pinball uses press/release (onADown/onAUp)
         if (isSnake) {
           const s = window.__arcadeState;
           if (s?.status === 'over') send('RESET');
@@ -450,6 +593,7 @@ function ControllerBound({ active, gameId, onSelect }) {
       }}
       onB={() => {
         if (!active) return;
+        if (isPinball) return;     // pinball uses press/release (onBDown/onBUp)
         if (isSnake) {
           const s = window.__arcadeState;
           if (s?.status === 'over') send('RESET');
@@ -463,11 +607,27 @@ function ControllerBound({ active, gameId, onSelect }) {
       }}
       onX={() => {
         if (!active) return;
-        if (!isSnake && !isInvaders) send('ROTATE', { dir: 1 });
+        if (!isSnake && !isInvaders && !isPinball) send('ROTATE', { dir: 1 });
       }}
       onY={() => {
         if (!active) return;
+        if (isPinball) return;     // pinball uses press/release (onYDown/onYUp)
         if (!isSnake && !isInvaders) send('HOLD');
+      }}
+      // Pinball hold-to-up flippers + plunger hold-to-pull. Y = LEFT flipper
+      // (Y sits on the left of the SNES diamond), A = RIGHT flipper, B = plunger.
+      onYDown={() => active && isPinball && send('FLIPPER', { side: 'left', up: true })}
+      onYUp={()   => active && isPinball && send('FLIPPER', { side: 'left', up: false })}
+      onADown={() => active && isPinball && send('FLIPPER', { side: 'right', up: true })}
+      onAUp={()   => active && isPinball && send('FLIPPER', { side: 'right', up: false })}
+      onBDown={() => active && isPinball && setPlungerHeld(true)}
+      onBUp={() => {
+        if (!active || !isPinball) return;
+        const hr = window.__arcadeHookResult;
+        if (hr?.plungerHeldRef && hr.plungerHeldRef.current) {
+          hr.plungerHeldRef.current = false;
+          send('PLUNGER_RELEASE');
+        }
       }}
       onSelect={onSelect}
       onStart={() => active && send('PAUSE')}

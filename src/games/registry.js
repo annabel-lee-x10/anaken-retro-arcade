@@ -19,6 +19,11 @@ const INVADERS_MODES = [
   { id: 'attack', name: 'TIME ATTACK', desc: '3 minutes · maximum score' },
 ];
 
+const PINBALL_MODES = [
+  { id: 'classic', name: 'CLASSIC', desc: '3 balls · score chase' },
+  { id: 'speedrun', name: 'SPEEDRUN', desc: '1 ball · go for max' },
+];
+
 export const GAMES = [
   {
     id: 'tetris',
@@ -40,6 +45,13 @@ export const GAMES = [
     description: 'defend · aim · fire',
     icon: '👾',
     modes: INVADERS_MODES,
+  },
+  {
+    id: 'pinball',
+    name: 'PINBALL',
+    description: 'flip · bounce · don’t drain',
+    icon: '◉',
+    modes: PINBALL_MODES,
   },
 ];
 
