@@ -6,8 +6,10 @@ import { ModeSelect } from './components/ModeSelect.jsx';
 import { GamePicker } from './components/GamePicker.jsx';
 import { PauseMenu } from './components/PauseMenu.jsx';
 import { TetrisScreen, useTetris } from './games/tetris/TetrisGame.jsx';
+import { SnakeScreen, useSnake } from './games/snake/SnakeGame.jsx';
 import { tetrisAudio } from './games/tetris/audio.js';
-import { GAMES, shouldShowPicker, getDefaultGame } from './games/registry.js';
+import { snakeAudio } from './games/snake/audio.js';
+import { GAMES, shouldShowPicker, getDefaultGame, getGameById } from './games/registry.js';
 import './App.css';
 
 const SKIN_KEY = 'arcade.skin';
@@ -31,6 +33,7 @@ export default function App() {
 
   useEffect(() => {
     tetrisAudio.setMuted(muted);
+    snakeAudio.setMuted(muted);
     localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
   }, [muted]);
 
@@ -39,6 +42,8 @@ export default function App() {
   const initAudio = useCallback(() => {
     tetrisAudio.init();
     tetrisAudio.resume();
+    snakeAudio.init();
+    snakeAudio.resume();
   }, []);
 
   const goToPickerOrModeSelect = useCallback(() => {
@@ -58,6 +63,9 @@ export default function App() {
     setScreen('playing');
   }, [initAudio]);
 
+  const activeGame = getGameById(GAMES, gameId);
+  const activeModes = activeGame?.modes;
+
   return (
     <div className="device-shell skin-bg" onPointerDown={initAudio}>
       <div className="device-frame">
@@ -72,11 +80,26 @@ export default function App() {
             <GamePicker games={GAMES} onPick={onPickGame} />
           )}
           {screen === 'mode-select' && (
-            <ModeSelect onPick={onPickMode} />
+            <ModeSelect onPick={onPickMode} modes={activeModes} />
           )}
           {screen === 'playing' && gameId === 'tetris' && mode && (
-            <Game
-              key={mode}
+            <TetrisGameMount
+              key={`tetris-${mode}`}
+              mode={mode}
+              menuOpen={menuOpen}
+              muted={muted}
+              hasPicker={shouldShowPicker(GAMES)}
+              onOpenMenu={() => setMenuOpen(true)}
+              onCloseMenu={() => setMenuOpen(false)}
+              onChangeMode={() => { setScreen('mode-select'); setMode(null); setMenuOpen(false); }}
+              onQuit={goToPickerOrModeSelect}
+              onToggleMute={() => setMuted((m) => !m)}
+              onGameOverMenu={() => { setScreen('mode-select'); setMode(null); }}
+            />
+          )}
+          {screen === 'playing' && gameId === 'snake' && mode && (
+            <SnakeGameMount
+              key={`snake-${mode}`}
               mode={mode}
               menuOpen={menuOpen}
               muted={muted}
@@ -90,22 +113,24 @@ export default function App() {
             />
           )}
         </Screen>
-        <ControllerBound active={screen === 'playing'} onSelect={() => setMenuOpen((o) => !o)} />
+        <ControllerBound
+          active={screen === 'playing'}
+          gameId={gameId}
+          onSelect={() => setMenuOpen((o) => !o)}
+        />
         <div className="skin-grain" />
       </div>
     </div>
   );
 }
 
-// Bridge between game state + controller buttons + keyboard.
-// Game lives inside the Screen; the controller dispatches via a window-scoped ref.
+// ----- Tetris game mount ---------------------------------------------------
 
-function Game({
+function TetrisGameMount({
   mode, menuOpen, muted, hasPicker,
   onOpenMenu, onCloseMenu, onChangeMode, onQuit, onToggleMute, onGameOverMenu,
 }) {
   const { state, dispatch } = useTetris(mode);
-  // expose dispatch globally so the controller (rendered as sibling) can talk to it
   useEffect(() => {
     window.__arcadeDispatch = dispatch;
     window.__arcadeState = state;
@@ -114,8 +139,6 @@ function Game({
     };
   });
 
-  // Track whether we paused the game on behalf of the menu so Resume can
-  // restore the prior status without flipping a paused-by-user game to playing.
   const pausedByMenuRef = useRef(false);
   useEffect(() => {
     if (menuOpen) {
@@ -130,17 +153,14 @@ function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuOpen]);
 
-  // keyboard
   useEffect(() => {
     const onKey = (e) => {
-      // Escape opens/closes the menu — always available while a game is mounted.
       if (e.key === 'Escape') {
         e.preventDefault();
         if (menuOpen) onCloseMenu();
         else onOpenMenu();
         return;
       }
-      // Block gameplay keys while the menu is open.
       if (menuOpen) return;
       const map = {
         ArrowLeft:  () => dispatch({ type: 'MOVE', dx: -1 }),
@@ -193,25 +213,143 @@ function Game({
   );
 }
 
-function ControllerBound({ active, onSelect }) {
+// ----- Snake game mount ----------------------------------------------------
+
+function SnakeGameMount({
+  mode, menuOpen, muted, hasPicker,
+  onOpenMenu, onCloseMenu, onChangeMode, onQuit, onToggleMute, onGameOverMenu,
+}) {
+  const { state, dispatch } = useSnake(mode);
+  useEffect(() => {
+    window.__arcadeDispatch = dispatch;
+    window.__arcadeState = state;
+    return () => {
+      if (window.__arcadeDispatch === dispatch) window.__arcadeDispatch = null;
+    };
+  });
+
+  // Pause-on-menu mirror logic identical to Tetris.
+  const pausedByMenuRef = useRef(false);
+  useEffect(() => {
+    if (menuOpen) {
+      if (state.status === 'playing') {
+        pausedByMenuRef.current = true;
+        dispatch({ type: 'PAUSE' });
+      }
+    } else if (pausedByMenuRef.current) {
+      pausedByMenuRef.current = false;
+      if (state.status === 'paused') dispatch({ type: 'PAUSE' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (menuOpen) onCloseMenu();
+        else onOpenMenu();
+        return;
+      }
+      if (menuOpen) return;
+      const map = {
+        ArrowLeft:  () => dispatch({ type: 'DIR', dir: 'left' }),
+        ArrowRight: () => dispatch({ type: 'DIR', dir: 'right' }),
+        ArrowUp:    () => dispatch({ type: 'DIR', dir: 'up' }),
+        ArrowDown:  () => dispatch({ type: 'DIR', dir: 'down' }),
+        Enter:      () => {
+          if (state.status === 'over') dispatch({ type: 'RESET' });
+          else dispatch({ type: 'PAUSE' });
+        },
+        p:          () => dispatch({ type: 'PAUSE' }),
+        P:          () => dispatch({ type: 'PAUSE' }),
+      };
+      const fn = map[e.key];
+      if (fn) {
+        e.preventDefault();
+        fn();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [dispatch, menuOpen, state.status, onOpenMenu, onCloseMenu]);
+
+  return (
+    <>
+      <SnakeScreen
+        state={state}
+        onAction={(a) => {
+          if (a === 'reset') dispatch({ type: 'RESET' });
+          if (a === 'menu') onGameOverMenu();
+        }}
+      />
+      {menuOpen && (
+        <PauseMenu
+          muted={muted}
+          hasPicker={hasPicker}
+          onResume={onCloseMenu}
+          onRestart={() => { dispatch({ type: 'RESET' }); onCloseMenu(); }}
+          onChangeMode={onChangeMode}
+          onQuit={onQuit}
+          onToggleMute={onToggleMute}
+          onClose={onCloseMenu}
+        />
+      )}
+    </>
+  );
+}
+
+// ----- Controller binding --------------------------------------------------
+
+function ControllerBound({ active, gameId, onSelect }) {
   const send = (type, payload = {}) => {
     const d = window.__arcadeDispatch;
     if (!d) return;
     d({ type, ...payload });
   };
+
+  const isSnake = gameId === 'snake';
+
   return (
     <Controller
       onDir={(dir) => {
         if (!active) return;
-        if (dir === 'left') send('MOVE', { dx: -1 });
-        else if (dir === 'right') send('MOVE', { dx: 1 });
-        else if (dir === 'down') send('SOFT');
-        else if (dir === 'up') send('HARD');
+        if (isSnake) {
+          send('DIR', { dir });
+        } else {
+          if (dir === 'left') send('MOVE', { dx: -1 });
+          else if (dir === 'right') send('MOVE', { dx: 1 });
+          else if (dir === 'down') send('SOFT');
+          else if (dir === 'up') send('HARD');
+        }
       }}
-      onA={() => active && send('ROTATE', { dir: 1 })}
-      onB={() => active && send('HARD')}
-      onX={() => active && send('ROTATE', { dir: 1 })}
-      onY={() => active && send('HOLD')}
+      onA={() => {
+        if (!active) return;
+        if (isSnake) {
+          // A also acts as "play again" on game-over; on a live game it's a no-op.
+          const s = window.__arcadeState;
+          if (s?.status === 'over') send('RESET');
+        } else {
+          send('ROTATE', { dir: 1 });
+        }
+      }}
+      onB={() => {
+        if (!active) return;
+        if (isSnake) {
+          const s = window.__arcadeState;
+          if (s?.status === 'over') send('RESET');
+        } else {
+          send('HARD');
+        }
+      }}
+      onX={() => {
+        if (!active) return;
+        if (!isSnake) send('ROTATE', { dir: 1 });
+      }}
+      onY={() => {
+        if (!active) return;
+        if (!isSnake) send('HOLD');
+      }}
       onSelect={onSelect}
       onStart={() => active && send('PAUSE')}
     />
