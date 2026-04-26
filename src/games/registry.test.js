@@ -25,6 +25,29 @@ describe('games registry', () => {
   it('tetris is registered', () => {
     expect(GAMES.find((g) => g.id === 'tetris')).toBeTruthy();
   });
+
+  it('snake is registered', () => {
+    expect(GAMES.find((g) => g.id === 'snake')).toBeTruthy();
+  });
+
+  it('every game declares at least one mode', () => {
+    for (const g of GAMES) {
+      expect(Array.isArray(g.modes)).toBe(true);
+      expect(g.modes.length).toBeGreaterThan(0);
+      for (const m of g.modes) {
+        expect(typeof m.id).toBe('string');
+        expect(typeof m.name).toBe('string');
+        expect(typeof m.desc).toBe('string');
+      }
+    }
+  });
+
+  it('snake exposes classic and wraparound modes', () => {
+    const snake = GAMES.find((g) => g.id === 'snake');
+    const ids = snake.modes.map((m) => m.id);
+    expect(ids).toContain('classic');
+    expect(ids).toContain('wraparound');
+  });
 });
 
 describe('shouldShowPicker', () => {
