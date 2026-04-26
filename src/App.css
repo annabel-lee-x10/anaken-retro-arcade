@@ -961,3 +961,147 @@
   letter-spacing: 0.05em;
   margin-top: 4px;
 }
+
+/* ------ INVADERS SCREEN ------ */
+.invaders-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 6px;
+  font-family: var(--font-hud);
+  color: var(--fg);
+  z-index: 1;
+}
+
+.invaders-hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.invaders-stage {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  padding: 4px;
+}
+
+[data-skin='neon'] .invaders-stage {
+  border-color: rgba(0, 255, 136, 0.3);
+  box-shadow: inset 0 0 24px rgba(0, 255, 136, 0.12);
+}
+
+[data-skin='snes'] .invaders-stage {
+  border: 1px solid #4a3e6c;
+  background: #0a0508;
+}
+
+[data-skin='quiet'] .invaders-stage {
+  border-color: rgba(232, 82, 10, 0.25);
+}
+
+.invaders-canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.lives-row {
+  display: inline-flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.life-pip {
+  color: var(--inv-player, var(--accent));
+  text-shadow: var(--hud-glow);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Invaders skin tokens — alien/bunker/bullet/player palette per skin. */
+[data-skin='neon'] {
+  --inv-alien-top: #ff2d6e;
+  --inv-alien-mid: #00d4ff;
+  --inv-alien-bot: #00ff88;
+  --inv-saucer:    #ffe800;
+  --inv-player:    #00ff88;
+  --inv-bullet:    #ffffff;
+  --inv-alien-bullet: #ff00aa;
+  --inv-bunker:    #00ff88;
+}
+[data-skin='snes'] {
+  --inv-alien-top: #d62828;
+  --inv-alien-mid: #2e86de;
+  --inv-alien-bot: #2dab66;
+  --inv-saucer:    #f4d03f;
+  --inv-player:    #f5f5fa;
+  --inv-bullet:    #f5f5fa;
+  --inv-alien-bullet: #ff6a00;
+  --inv-bunker:    #8e4ec6;
+}
+[data-skin='quiet'] {
+  --inv-alien-top: #E8520A;
+  --inv-alien-mid: #f0c674;
+  --inv-alien-bot: #4A6FA5;
+  --inv-saucer:    #f0c674;
+  --inv-player:    #e8e6e3;
+  --inv-bullet:    #e8e6e3;
+  --inv-alien-bullet: #E8520A;
+  --inv-bunker:    #6e6c68;
+}
+
+/* ------ INVADERS OVERLAYS ------ */
+.invaders-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(2px);
+  font-family: var(--font-display);
+  z-index: 5;
+  gap: 12px;
+  padding: 16px;
+}
+
+.invaders-overlay-title {
+  font-size: 22px;
+  color: var(--accent);
+  text-shadow: var(--hud-glow);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.invaders-overlay-sub {
+  font-family: var(--font-hud);
+  font-size: 14px;
+  color: var(--fg);
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.invaders-overlay-actions { display: flex; gap: 10px; margin-top: 4px; }
+
+.invaders-overlay-actions button {
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #000;
+  border: 0;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+[data-skin='neon'] .invaders-overlay-actions button { box-shadow: 0 0 12px var(--accent); }

@@ -13,6 +13,12 @@ const SNAKE_MODES = [
   { id: 'wraparound', name: 'WRAPAROUND', desc: 'walls warp · only you can stop you' },
 ];
 
+const INVADERS_MODES = [
+  { id: 'classic', name: 'CLASSIC', desc: 'endless waves · 3 lives · 4 bunkers' },
+  { id: 'survival', name: 'SURVIVAL', desc: 'one life · no bunkers · how long?' },
+  { id: 'attack', name: 'TIME ATTACK', desc: '3 minutes · maximum score' },
+];
+
 export const GAMES = [
   {
     id: 'tetris',
@@ -27,6 +33,13 @@ export const GAMES = [
     description: 'eat · grow · survive',
     icon: '◆',
     modes: SNAKE_MODES,
+  },
+  {
+    id: 'invaders',
+    name: 'SPACE INVADERS',
+    description: 'defend · aim · fire',
+    icon: '👾',
+    modes: INVADERS_MODES,
   },
 ];
 

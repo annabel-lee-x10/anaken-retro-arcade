@@ -30,6 +30,10 @@ describe('games registry', () => {
     expect(GAMES.find((g) => g.id === 'snake')).toBeTruthy();
   });
 
+  it('invaders is registered', () => {
+    expect(GAMES.find((g) => g.id === 'invaders')).toBeTruthy();
+  });
+
   it('every game declares at least one mode', () => {
     for (const g of GAMES) {
       expect(Array.isArray(g.modes)).toBe(true);
