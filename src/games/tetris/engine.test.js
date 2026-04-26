@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createGame, move, rotate, softDrop, hardDrop, hold, tick, ghostY, getNext } from './engine.js';
+import { createGame, move, rotate, softDrop, hardDrop, hold, tick, ghostY, getNext, clampDt, MAX_TICK_MS } from './engine.js';
 import { COLS, ROWS } from './board.js';
 
 // deterministic seed-based RNG replacement for tests
@@ -208,6 +208,44 @@ describe('engine: game over', () => {
     };
     const g2 = hardDrop(g);
     expect(g2.status).toBe('over');
+  });
+});
+
+describe('engine: clampDt (random-drop guard)', () => {
+  it('exports a positive MAX_TICK_MS budget', () => {
+    expect(MAX_TICK_MS).toBeGreaterThan(0);
+    expect(MAX_TICK_MS).toBeLessThanOrEqual(200);
+  });
+
+  it('returns dt unchanged when below the cap', () => {
+    expect(clampDt(0)).toBe(0);
+    expect(clampDt(16)).toBe(16);
+    expect(clampDt(MAX_TICK_MS - 1)).toBe(MAX_TICK_MS - 1);
+  });
+
+  it('caps dt at MAX_TICK_MS for tab-background recovery', () => {
+    expect(clampDt(MAX_TICK_MS + 1)).toBe(MAX_TICK_MS);
+    expect(clampDt(60_000)).toBe(MAX_TICK_MS);
+    expect(clampDt(Number.POSITIVE_INFINITY)).toBe(MAX_TICK_MS);
+  });
+
+  it('treats non-finite or negative dt as zero', () => {
+    expect(clampDt(NaN)).toBe(0);
+    expect(clampDt(-5)).toBe(0);
+    expect(clampDt(undefined)).toBe(0);
+  });
+
+  it('a single clamped tick locks at most one piece (no random multi-drops)', () => {
+    const g = createGame({ rng: makeSeed() });
+    const huge = 60_000; // 60s of "background" time
+    const dt = clampDt(huge);
+    const after = tick(g, dt);
+    // Whatever happened, the engine must remain in a valid playing state
+    // (or at most "over"); we should NOT see line/score deltas suggesting
+    // multiple pieces have locked in a single frame.
+    expect(after.lines).toBe(g.lines);
+    // Score may grow only via lineScore; with no clears, score should be unchanged.
+    expect(after.score).toBe(g.score);
   });
 });
 

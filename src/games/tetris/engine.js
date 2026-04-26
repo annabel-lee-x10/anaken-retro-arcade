@@ -12,6 +12,19 @@ const SPAWN_X = 3;
 const SPAWN_Y = 0;
 const LOCK_DELAY_MS = 500;
 
+// Upper bound on a single tick's dt. When a tab is backgrounded the browser
+// suspends rAF; on resume the next frame's dt would otherwise equal the entire
+// suspension (seconds → minutes), which the gravity loop would consume by
+// dropping and locking many pieces in one go ("random blocks dropping").
+// A clamp of 100ms permits up to ~2 gravity steps even at high levels and
+// prevents runaway lock chains.
+export const MAX_TICK_MS = 100;
+
+export const clampDt = (dt) => {
+  if (typeof dt !== 'number' || Number.isNaN(dt) || dt < 0) return 0;
+  return dt > MAX_TICK_MS ? MAX_TICK_MS : dt;
+};
+
 const colorIndex = (type) => PIECE_TYPES.indexOf(type) + 1;
 
 const generateBag = (rng) => {

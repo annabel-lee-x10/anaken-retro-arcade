@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   createGame, move, rotate, softDrop, hardDrop, hold,
-  tick, togglePause, ghostY, getNext,
+  tick, togglePause, ghostY, getNext, clampDt,
 } from './engine.js';
 import { getCells, getColor, PIECE_TYPES } from './pieces.js';
 import { ROWS, COLS } from './board.js';
@@ -38,12 +38,14 @@ export const useTetris = (mode = 'classic') => {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Game loop
+  // Game loop. dt is clamped so a backgrounded tab returning doesn't dump
+  // a giant accumulated delta into the gravity loop (which would lock several
+  // pieces in one frame — the "random blocks dropping" bug).
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
     const loop = (t) => {
-      const dt = t - last;
+      const dt = clampDt(t - last);
       last = t;
       if (stateRef.current.status === 'playing') {
         dispatch({ type: 'TICK', dt });
@@ -57,7 +59,10 @@ export const useTetris = (mode = 'classic') => {
   // SFX hooks
   const lastLines = useRef(0);
   const lastLevel = useRef(1);
-  const lastStatus = useRef(state.status);
+  // Init to null (not state.status) so the very first 'playing' render is
+  // detected as a transition and music starts on first game start. Otherwise
+  // music only kicks in after the first pause/unpause cycle.
+  const lastStatus = useRef(null);
   useEffect(() => {
     if (state.lines > lastLines.current) {
       const cleared = state.lines - lastLines.current;
