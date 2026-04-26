@@ -39,7 +39,8 @@ export class TetrisAudio {
 
   init() {
     if (this.ctx) return;
-    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const Ctx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
+    if (!Ctx) return; // jsdom / unsupported browsers — silent no-op
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.5;
